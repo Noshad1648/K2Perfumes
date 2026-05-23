@@ -526,7 +526,43 @@ function changeQty(i,d){
 function openCart(){document.getElementById('cart-sidebar').classList.add('open');document.getElementById('cart-overlay').classList.add('open');}
 function closeCart(){document.getElementById('cart-sidebar').classList.remove('open');document.getElementById('cart-overlay').classList.remove('open');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
+<script>
+
+const supabaseUrl =
+'https://aiglpxugwautdxnlkvii.supabase.co';
+
+const supabaseKey =
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZ2xweHVnd2F1dGR4bmxrdmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MjIyNjcsImV4cCI6MjA5NTA5ODI2N30.AqwLZUfdCEMMO0lzRhZv4qQLcyElRYCrMnZOgB1CeIc';
+
+const supabase =
+window.supabase.createClient(
+supabaseUrl,
+supabaseKey
+);
+
+async function loadProducts() {
+
+const { data, error } =
+await supabase
+.from('products')
+.select('*');
+
+if(error) {
+console.log(error);
+return;
+}
+
+products = data;
+
+renderProducts();
+
+}
+
+loadProducts();
+
+</script>
 renderProducts();
 </script>
 </body>
