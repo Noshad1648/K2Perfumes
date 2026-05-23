@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K2 Perfumes — Premium Luxury Fragrances</title>
+    <!-- Supabase CDN Link -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        /* Base Styling */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f9f9f9; color: #333; }
+        h1, h3 { text-align: center; color: #111; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .product-card { border: 1px solid #eee; padding: 20px; border-radius: 12px; text-align: center; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .product-card img { max-width: 100%; height: 200px; object-fit: cover; border-radius: 8px; }
+        .price { margin: 15px 0; font-size: 1.1rem; }
+        .price .sale { font-weight: bold; color: #27ae60; }
+        .price .original { text-decoration: line-through; color: #95a5a6; margin-left: 10px; font-size: 0.9rem; }
+        #order-form-container { max-width: 500px; margin: 40px auto; padding: 30px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #333; }
+    </style>
+</head>
+<body>
+    <h1>🏔 K2 Perfumes</h1>
+    <p style="text-align: center; font-style: italic; color: #666;">The Art of Exceptional Scent</p>
+
+    <!-- Dynamic Products Section -->
+    <div class="products-grid" id="products-container">
+        <p style="text-align: center; grid-column: 1/-1;">Loading fragrances from database...</p>
+    </div>
+
+    <!-- Order Submission Form -->
+    <div id="order-form-container">
+        <h3>🌹 Place Your Order</h3>
+        <form id="checkout-form">
+            <input type="text" id="full-name" placeholder="Full Name *" required>
+            <input type="text" id="phone" placeholder="Phone Number *" required>
+            <input type="text" id="city" placeholder="City *" required>
+            <textarea id="address" placeholder="Complete Shipping Address *" rows="3" required></textarea>
+            
+            <label style="font-size: 0.9rem; color: #555;">Select Quantity:</label>
+            <select id="quantity">
+                <option value="1">1 Bottle</option>
+                <option value="2">2 Bottles</option>
+                <option value="3">3 Bottles</option>
+                <option value="4">4 Bottles</option>
+                <option value="5">5 Bottles</option>
+            </select>
+
+            <div style="margin: 15px 0; border: 1px solid #eee; padding: 10px; border-radius: 6px;">
+                <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 0.9rem;">Payment Method *</p>
+                <label style="margin-right: 15px;"><input type="radio" name="payment" value="JazzCash" checked> 📱 JazzCash</label>
+                <label style="margin-right: 15px;"><input type="radio" name="payment" value="EasyPaisa"> 💚 EasyPaisa</label>
+                <label><input type="radio" name="payment" value="COD"> 📦 COD</label>
+            </div>
+
+            <button type="submit">✅ Confirm Order</button>
+        </form>
+    </div>
+
+    <script>
+        // Connected to your live Supabase credentials
+        const supabaseUrl = 'https://aiglpxugwautdxnlkvii.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZ2xweHVnd2F1dGR4bmxrdmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MjIyNjcsImV4cCI6MjA5NTA5ODI2N30.AqwLZUfdCEMMO0lzRhZv4qQLcyElRYCrMnZOgB1CeIc';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 1. Fetching data instantly from Supabase
+        async function fetchProducts() {
+            const container = document.getElementById('products-container');
+            
+            const { data: products, error } = await supabase
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                container.innerHTML = `<p style="color:red; text-align:center; grid-column:1/-1;">Error loading products: ${error.message}</p>`;
+                return;
+            }
+
+            if (!products || products.length === 0) {
+                container.innerHTML = `<p style="text-align:center; grid-column:1/-1; color:#777;">No products found. Please add products from Admin Panel.</p>`;
+                return;
+            }
+
+            container.innerHTML = ''; 
+            products.forEach(product => {
+                container.innerHTML += `
+                    <div class="product-card">
+                        <img src="${product.image_url || 'https://placeholder.com'}" alt="${product.name}">
+                        <h3 style="margin: 10px 0 5px 0;">${product.name}</h3>
+                        <p style="margin: 0; font-size: 0.9rem; color: #666;"><em>${product.scent_profile || 'Exclusive Scent'}</em></p>
+                        <div class="price">
+                            <span class="sale">Rs. ${product.sale_price}</span>
+                            ${product.original_price ? `<span class="original">Rs. ${product.original_price}</span>` : ''}
+                        </div>
+                        <p style="font-size: 0.85rem; color: #888;">Stock: ${product.stock_quantity} available</p>
+                        <button onclick="alert('${product.name} added to cart! Proceed to checkout form below.')">Add to Cart 🛒</button>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Insert Order into Supabase
+        document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const orderData = {
+                full_name: document.getElementById('full-name').value,
+                phone: document.getElementById('phone').value,
+                city: document.getElementById('city').value,
+                address: document.getElementById('address').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                payment_method: document.querySelector('input[name="payment"]:checked').value,
+                status: 'Pending'
+            };
+
+            const { data, error } = await supabase
+                .from('orders')
+                .insert([orderData]);
+
+            if (error) {
+                alert("Order Error: " + error.message);
+            } else {
+                alert("🎉 Shukriya! Aapka order successfully save ho gaya hai. Hum jald hi WhatsApp par rabta karenge!");
+                document.getElementById('checkout-form').reset();
+            }
+        });
+
+        window.onload = fetchProducts;
+    </script>
+</body>
+</html>
