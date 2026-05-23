@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K2 Perfumes — Admin</title>
+  <link href="https://googleapis.com" rel="stylesheet"/>
+  
+  <!-- Supabase CDN Link -->
+  <script src="https://jsdelivr.net"></script>
+
+  <style>
+    :root{--bg:#0a0a0a;--surface:#111118;--surface2:#1a1a24;--border:rgba(201,168,76,0.2);--gold:#c9a84c;--gold2:#e8c96a;--text:#f0ece0;--muted:#7a7060;--green:#22c55e;--red:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 40% 40%,rgba(201,168,76,0.1) 0%,transparent 60%),var(--bg);}
+    .login-box{background:var(--surface);border:1px solid var(--border);padding:48px 44px;width:420px;max-width:95vw;}
+    .login-logo{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:3px;margin-bottom:4px;}
+    .login-sub{color:var(--muted);font-size:0.82rem;margin-bottom:36px;}
+    .fg label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:700;margin-bottom:8px;}
+    .fg input{width:100%;padding:13px 16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Mulish',sans-serif;font-size:0.95rem;outline:none;transition:border-color 0.2s;}
+    .fg input:focus{border-color:var(--gold);}
+    .fg{margin-bottom:20px;}
+    .login-btn{width:100%;padding:14px;background:var(--gold);color:#000;border:none;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;margin-top:8px;}
+    .login-btn:hover{background:var(--gold2);}
+    .login-hint{text-align:center;margin-top:20px;font-size:0.78rem;color:var(--muted);background:var(--surface2);padding:12px;border:1px solid var(--border);}
+    .lerr{color:var(--red);font-size:0.85rem;text-align:center;margin-top:12px;display:none;}
+    
+    #admin-app{display:none;min-height:100vh;}
+    .layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+    .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+    .sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border);}
+    .sidebar-logo h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--gold);letter-spacing:3px;}
+    .sidebar-logo p{color:var(--muted);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+    .sidebar-nav{padding:14px 10px;flex:1;}
+    .nl{font-size:0.62rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);padding:0 12px;margin-bottom:6px;font-weight:700;margin-top:14px;}
+    .ni{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;font-size:0.87rem;font-weight:500;color:var(--muted);transition:all 0.2s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:'Mulish',sans-serif;}
+    .ni:hover{background:var(--surface2);color:var(--text);}
+    .ni.active{background:rgba(201,168,76,0.1);color:var(--gold);border-left:2px solid var(--gold);}
+    .nb{margin-left:auto;background:var(--red);color:#fff;border-radius:2px;padding:2px 7px;font-size:0.67rem;font-weight:800;}
+    .nb.gold{background:var(--gold);color:#000;}
+    .sf{padding:14px 18px;border-top:1px solid var(--border);}
+    .au{display:flex;align-items:center;gap:10px;}
+    .av{width:34px;height:34px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.88rem;color:#000;}
+    .ai h4{font-size:0.85rem;font-weight:700;color:var(--gold);}
+    .ai p{font-size:0.68rem;color:var(--muted);}
+    .lb{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);padding:5px 9px;cursor:pointer;font-size:0.75rem;transition:all 0.2s;}
+    .lb:hover{border-color:var(--red);color:var(--red);}
+    .main{background:var(--bg);overflow-y:auto;}
+    .topbar{position:sticky;top:0;z-index:10;background:rgba(10,10,10,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;}
+    .topbar h1{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:1px;}
+    
+    /* Buttons */
+    .btn{padding:8px 18px;font-family:'Mulish',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.2s;border:none;letter-spacing:0.5px;}
+    .bg{background:var(--gold);color:#000;}.bg:hover{background:var(--gold2);}
+    .bo{background:transparent;color:var(--text);border:1px solid var(--border);}.bo:hover{border-color:var(--gold);color:var(--gold);}
+    
+    .page{display:none;padding:28px;}
+    .page.active{display:block;}
+    
+    /* Stats cards */
+    .sg{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:24px;}
+    .sc{background:var(--surface);border:1px solid var(--border);padding:20px;position:relative;overflow:hidden;}
+    .sl{font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700;margin-bottom:10px;}
+    .sv{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--gold);margin-bottom:4px;}
+    
+    /* Table / Forms inside panel */
+    form { background: var(--surface); padding: 25px; border: 1px solid var(--border); max-width: 600px; margin-top: 20px; }
+    form input, form textarea { width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); margin-bottom: 15px; font-family: 'Mulish', sans-serif; }
+    form button { background: var(--gold); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; }
+    form button:hover { background: var(--gold2); }
+  </style>
+</head>
+<body>
+
+  <!-- 1. LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">K2 ADMIN</div>
+      <div class="login-sub">Products aur Orders manage karein</div>
+      
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)" style="background:transparent; padding:0; border:none; max-width:100%;">
+        <div class="fg">
+          <label>Username</label>
+          <input type="text" id="admin-user" required autocomplete="off"/>
+        </div>
+        <div class="fg">
+          <label>Password</label>
+          <input type="password" id="admin-pass" required/>
+        </div>
+        <button type="submit" class="login-btn">Sign In →</button>
+      </form>
+      
+      <div class="lerr" id="login-error">❌ Wrong credentials! Please check again.</div>
+      <div class="login-hint">
+        Username: <strong>k2admin</strong> | Password: <strong>k2perfumes123</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MAIN ADMIN APP INTERFACE -->
+  <div id="admin-app">
+    <div class="layout">
+      <!-- Sidebar Options -->
+      <div class="sidebar">
+        <div class="sidebar-logo">
+          <h2>K2</h2>
+          <p>Admin Panel</p>
+        </div>
+        <div class="sidebar-nav">
+          <div class="nl">Main</div>
+          <button class="ni active">📊 Dashboard</button>
+          <div class="nl">Store Control</div>
+          <p style="padding: 10px 12px; font-size:0.8rem; color:var(--muted);">Use the action panel to update items instantly.</p>
+        </div>
+        <div class="sf">
+          <div class="au">
+            <div class="av">K</div>
+            <div class="ai">
+              <h4>K2 Admin</h4>
+              <p>Store Manager</p>
+            </div>
+            <button class="lb" onclick="window.location.reload()">Exit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Panel View -->
+      <div class="main">
+        <div class="topbar">
+          <h1># DASHBOARD</h1>
+          <div class="tr">
+            <span style="color:var(--green); font-size:0.85rem;">● Store Live</span>
+          </div>
+        </div>
+
+        <div class="page active">
+          <!-- Stats Panel Counters -->
+          <div class="sg">
+            <div class="sc">
+              <div class="sl">Total Orders</div>
+              <div class="sv" id="stat-orders">0</div>
+            </div>
+            <div class="sc">
+              <div class="sl">Active Products</div>
+              <div class="sv" id="stat-products">0</div>
+            </div>
+          </div>
+
+          <!-- Product Management Entry Section -->
+          <div style="background:var(--surface); border:1px solid var(--border); padding:25px; border-radius:4px;">
+            <h3 style="font-family:'Syne',sans-serif; color:var(--gold); margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">ADD NEW PRODUCT</h3>
+            <form id="add-product-form" onsubmit="handleProductSubmit(event)" style="background:transparent; padding:0; border:none; max-width:100%;">
+              <input type="text" id="prod-name" placeholder="Product Name *" required>
+              <input type="text" id="prod-scent" placeholder="Scent Profile (e.g. Oud, Floral, Musk)">
+              <input type="number" id="prod-sale" placeholder="Sale Price (Rs.) *" required>
+              <input type="number" id="prod-original" placeholder="Original Price (Rs.) (Optional)">
+              <input type="number" id="prod-stock" placeholder="Stock Quantity *" required>
+              <input type="text" id="prod-image" placeholder="Image URL (Link copy karke yahan paste krein)">
+              <textarea id="prod-desc" placeholder="Product Description..." rows="4"></textarea>
+              
