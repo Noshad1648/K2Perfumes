@@ -1,3 +1,254 @@
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZ2xweHVnd2F1dGR4bmxrdmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MjIyNjcsImV4cCI6MjA5NTA5ODI2N30.AqwLZUfdCEMMO0lzRhZv4qQLcyElRYCrMnZOgB1CeIc';const supabase = supabase.createClient(supabaseUrl, supabaseKey);// Dynamic Toast Handlerfunction showToast(msg) {const box = document.getElementById('toast-box');if(box) {box.innerText = msg;box.style.display = 'block';setTimeout(() => { box.style.display = 'none'; }, 4000);}}// 1. Fetch live items from table rows dynamicallyasync function fetchLiveProducts() {const container = document.getElementById('products-container');if(!container) return;const { data: products, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });if (error) {container.innerHTML = <p style="color:#ef4444; grid-column:1/-1;">Error loading products: ${error.message}</p>;return;}if (!products || products.length === 0) {container.innerHTML = <p style="grid-column:1/-1; color:var(--muted); font-style:italic;">No products available right now. Please add items via the Admin Panel.</p>;return;}container.innerHTML = '';products.forEach(product => {container.innerHTML += <div class="product-card"> <img src="${product.image_url || 'https://placeholder.com'}" alt="${product.name}"> <div class="product-name">${product.name}</div> <div class="scent-profile">${product.scent_profile || 'Premium Blend'}</div> <div class="price-container"> <span class="sale-price">Rs. ${product.sale_price}</span> ${product.original_price ?Rs. {product.original_price}</span>` : ''}
-</div>
-<span class="stock-badge">Available: {product.stock_quantity} LeftAdd to Cart 🛒`;});}// 2. Safe & Exact Columns Matching Order Pipeline Submissionasync function handleOrderSubmit(e) {e.preventDefault();const btn = document.getElementById('confirm-order-btn');if (btn) {btn.disabled = true;btn.textContent = '⏳ Processing...';}try {// Safety grab data valuesconst nameVal = document.getElementById('full-name').value.trim();const phoneVal = document.getElementById('phone').value.trim();const cityVal = document.getElementById('city').value.trim();const addressVal = document.getElementById('address').value.trim();const qtyVal = parseInt(document.getElementById('quantity').value || 1);// Build full address string to match database structureconst totalCombinedAddress = ${addressVal}, ${cityVal};// Calculate sample dynamic pricing mapping (Rs. 2499 per bottle base fallback rate)const finalCalculatedPrice = 2499 * qtyVal;// EXACT STRUCTURAL OBJECT MATCHING CAPTURED FROM YOUR LIVE COLUMNS SCREENconst orderData = {customer_name: nameVal,customer_phone: phoneVal,customer_address: totalCombinedAddress,total: finalCalculatedPrice, // Numeric row entry field mapstatus: 'pending',payment_status: 'unpaid',product_name: K2 Flora (${qtyVal} Bottle), // Dynamic description packagingtotal_price: finalCalculatedPrice};// Database injection executionconst { data, error } = await supabase.from('orders').insert([orderData]);if (error) {console.error("Database Execution Error Logged:", error);showToast('❌ Order fail! ' + error.message);} else {showToast('🎉 Order Placed Successfully!');document.getElementById('checkout-form').reset();}} catch(err) {console.error("Runtime Exception:", err);showToast('❌ Error: ' + err.message);} finally {if (btn) {btn.disabled = false;btn.textContent = '✅ Confirm Order';}}}window.onload = fetchLiveProducts;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K2 Perfumes — Premium Luxury Fragrances</title>
+  <link href="https://googleapis.com" rel="stylesheet"/>
+  
+  <!-- Supabase Core Global CDN -->
+  <script src="https://jsdelivr.net"></script>
+
+  <style>
+    :root{--gold:#c9a84c;--gold2:#e8c96a;--dark:#0a0a0a;--dark2:#111111;--dark3:#1a1a1a;--text:#f5f0e8;--muted:#9a9080;--border:rgba(201,168,76,0.2);--red:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden;}
+    header{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 5%;}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;padding:18px 0;}
+    .logo h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);letter-spacing:4px;}
+    .logo p{font-size:0.6rem;letter-spacing:6px;text-transform:uppercase;color:var(--muted);}
+    nav a{text-decoration:none;font-size:0.8rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-left:24px;transition:color 0.2s;}
+    nav a:hover{color:var(--gold);}
+    .cart-btn{background:none;border:1px solid var(--border);color:var(--gold);padding:8px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;}
+    .cart-btn:hover{background:var(--gold);color:var(--dark);}
+    
+    .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;text-align:center;padding:80px 5%;background:radial-gradient(ellipse at center,rgba(201,168,76,0.08) 0%,transparent 70%),var(--dark);}
+    .hero-content{position:relative;z-index:2;max-width:800px;}
+    .hero h2{font-family:'Playfair Display',serif;font-size:3.5rem;color:var(--text);margin-bottom:20px;letter-spacing:2px;}
+    .hero h2 em{color:var(--gold);font-style:italic;}
+    .hero p{font-size:1.1rem;color:var(--muted);line-height:1.8;margin-bottom:40px;letter-spacing:1px;}
+    
+    .collection-section { padding: 80px 5%; max-width: 1400px; margin: 0 auto; text-align: center; }
+    .section-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--gold); letter-spacing: 2px; margin-bottom: 10px; }
+    .section-subtitle { color: var(--muted); font-size: 1rem; letter-spacing: 1px; margin-bottom: 50px; }
+    
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; padding: 20px 0; }
+    .product-card { background: var(--dark2); border: 1px solid var(--border); padding: 25px; text-align: center; position: relative; transition: all 0.3s ease; }
+    .product-card:hover { border-color: var(--gold); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(201,168,76,0.05); }
+    .product-card img { width: 100%; height: 320px; object-fit: cover; filter: brightness(0.9); transition: filter 0.3s; margin-bottom: 20px; }
+    .product-card:hover img { filter: brightness(1); }
+    .product-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--text); margin-bottom: 8px; letter-spacing: 1px; }
+    .scent-profile { font-size: 0.9rem; color: var(--gold); font-style: italic; margin-bottom: 15px; letter-spacing: 0.5px; }
+    .price-container { margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 12px; }
+    .sale-price { font-size: 1.3rem; font-weight: 600; color: var(--text); }
+    .original-price { font-size: 1rem; color: var(--muted); text-decoration: line-through; }
+    .stock-badge { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: block; }
+    .add-to-cart-btn { width: 100%; padding: 14px; background: none; border: 1px solid var(--gold); color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
+    .add-to-cart-btn:hover { background: var(--gold); color: var(--dark); }
+
+    /* Order Form Styling Matching Premium Theme */
+    .order-section { max-width: 600px; margin: 80px auto; padding: 40px; background: var(--dark2); border: 1px solid var(--border); }
+    .order-section h3 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold); text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
+    .form-group { margin-bottom: 20px; text-align: left; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 12px; background: var(--dark3); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+    .form-control:focus { border-color: var(--gold); outline: none; }
+    .radio-group { border: 1px solid var(--border); padding: 20px; margin-top: 25px; background: var(--dark3); }
+    .radio-options { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+    .radio-label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; cursor: pointer; color: var(--text); }
+    .radio-label input { accent-color: var(--gold); }
+    .submit-btn { width: 100%; padding: 16px; background: var(--gold); color: var(--dark); border: none; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; margin-top: 25px; transition: background 0.2s; }
+    .submit-btn:hover { background: var(--gold2); }
+
+    /* Toast Notification Component Styling */
+    #toast-box { position: fixed; bottom: 30px; right: 30px; z-index: 1000; background: #111; border: 1px solid var(--gold); color: #fff; padding: 16px 28px; font-weight: 500; border-radius: 4px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body>
+
+  <!-- Toast Element -->
+  <div id="toast-box"></div>
+
+  <!-- Premium Header -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <h1>K2</h1>
+        <p>Perfumes</p>
+      </div>
+      <nav>
+        <a href="#">Home</a>
+        <a href="#">Collection</a>
+        <a href="#">About</a>
+      </nav>
+      <button class="cart-btn">🛒 Store Live</button>
+    </div>
+  </header>
+
+  <!-- Hero Banner -->
+  <div class="hero">
+    <div class="hero-content">
+      <h2>The Art of <em>Exceptional</em> Scent</h2>
+      <p>Discover our exclusive collection of handcrafted luxury perfumes. Each fragrance tells a unique story of elegance and sophistication.</p>
+    </div>
+  </div>
+
+  <!-- Dynamic Collection Section -->
+  <div class="collection-section">
+    <h2 class="section-title">Our Collection</h2>
+    <p class="section-subtitle">Each 50ml Eau de Parfum — crafted for those who demand the finest</p>
+    
+    <div class="products-grid" id="products-container">
+        <p style="grid-column: 1/-1; color: var(--muted); font-style: italic;">Loading signature collection from database...</p>
+    </div>
+  </div>
+
+  <!-- Checkout Section -->
+  <div class="order-section">
+    <h3>🌹 Place Your Order</h3>
+    <form id="checkout-form" onsubmit="handleOrderSubmit(event)">
+        <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="full-name" class="form-control" placeholder="Your complete name" required>
+        </div>
+        <div class="form-group">
+            <label>Phone *</label>
+            <input type="text" id="phone" class="form-control" placeholder="Active phone / WhatsApp number" required>
+        </div>
+        <div class="form-group">
+            <label>City *</label>
+            <input type="text" id="city" class="form-control" placeholder="Your city name" required>
+        </div>
+        <div class="form-group">
+            <label>Complete Address *</label>
+            <textarea id="address" class="form-control" rows="3" placeholder="House number, street, area address" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>Quantity</label>
+            <select id="quantity" class="form-control">
+                <option value="1">1 Bottle</option>
+                <option value="2">2 Bottles</option>
+                <option value="3">3 Bottles</option>
+                <option value="4">4 Bottles</option>
+                <option value="5">5 Bottles</option>
+            </select>
+        </div>
+
+        <div class="radio-group">
+            <p style="margin: 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); font-weight: bold;">Payment Method *</p>
+            <div class="radio-options">
+                <label class="radio-label"><input type="radio" name="payment" value="JazzCash" checked> 📱 JazzCash (0308-0448188)</label>
+                <label class="radio-label"><input type="radio" name="payment" value="EasyPaisa"> 💚 EasyPaisa (0308-0448188)</label>
+                <label class="radio-label"><input type="radio" name="payment" value="Upaisa"> 💜 Upaisa (0308-0448188)</label>
+                <label class="radio-label"><input type="radio" name="payment" value="COD"> 📦 Cash on Delivery (All Pakistan)</label>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="confirm-order-btn">✅ Confirm Order</button>
+    </form>
+  </div>
+
+ <script>
+  // Supabase Connections
+  var supabaseUrl = 'https://supabase.co';
+  var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZ2xweHVnd2F1dGR4bmxrdmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MjIyNjcsImV4cCI6MjA5NTA5ODI2N30.AqwLZUfdCEMMO0lzRhZv4qQLcyElRYCrMnZOgB1CeIc';
+  var supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+  // Toast Function
+  function showToast(msg) {
+    var box = document.getElementById('toast-box');
+    if (box) {
+      box.innerText = msg;
+      box.style.display = 'block';
+      setTimeout(function() { box.style.display = 'none'; }, 4000);
+    }
+  }
+
+  // Fetch Live Products (Bina backticks k clean standard innerHTML structure)
+  async function fetchLiveProducts() {
+    var container = document.getElementById('products-container');
+    if (!container) return;
+    
+    var res = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (res.error) {
+      container.innerHTML = '<p style="color:#ef4444; grid-column:1/-1;">Error loading products</p>';
+      return;
+    }
+
+    var products = res.data;
+    if (!products || products.length === 0) {
+      container.innerHTML = '<p style="grid-column:1/-1; color:var(--muted); font-style:italic;">No products available right now. Please add items via the Admin Panel.</p>';
+      return;
+    }
+
+    container.innerHTML = ''; 
+    for (var i = 0; i < products.length; i++) {
+      var p = products[i];
+      var img = p.image_url ? p.image_url : 'https://placeholder.com';
+      var scent = p.scent_profile ? p.scent_profile : 'Premium Blend';
+      var origPriceHTML = p.original_price ? ' <span class="original-price" style="text-decoration:line-through; color:var(--muted); margin-left:10px;">Rs. ' + p.original_price + '</span>' : '';
+      
+      container.innerHTML += '<div class="product-card">' +
+        '<img src="' + img + '" alt="' + p.name + '">' +
+        '<div class="product-name" style="font-family:\'Playfair Display\', serif; font-size:1.5rem; margin-bottom:8px;">' + p.name + '</div>' +
+        '<div class="scent-profile" style="color:var(--gold); font-style:italic; margin-bottom:15px;">' + scent + '</div>' +
+        '<div class="price-container" style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">' +
+          '<span class="sale-price" style="font-weight:600;">Rs. ' + p.sale_price + '</span>' + origPriceHTML +
+        '</div>' +
+        '<span class="stock-badge" style="display:block; font-size:0.75rem; color:var(--muted); margin-bottom:15px;">Available: ' + p.stock_quantity + ' Left</span>' +
+        '<button class="add-to-cart-btn" style="width:100%; padding:14px; background:none; border:1px solid var(--gold); color:var(--gold); cursor:pointer; text-transform:uppercase; font-weight:600;" onclick="showToast(\'' + p.name + ' selected! Please scroll down to complete checkout form.\')">Add to Cart 🛒</button>' +
+      '</div>';
+    }
+  }
+
+  // Safe Order Submission Pipeline
+  async function handleOrderSubmit(e) {
+    e.preventDefault();
+    var btn = document.getElementById('confirm-order-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Processing...';
+    }
+    
+    try {
+      var nameVal = document.getElementById('full-name').value.trim();
+      var phoneVal = document.getElementById('phone').value.trim();
+      var cityVal = document.getElementById('city').value.trim();
+      var addressVal = document.getElementById('address').value.trim();
+      var qtyVal = parseInt(document.getElementById('quantity').value || 1);
+      
+      var totalCombinedAddress = addressVal + ", " + cityVal;
+      var finalCalculatedPrice = 2499 * qtyVal;
+
+      var orderData = {
+        customer_name: nameVal,
+        customer_phone: phoneVal,
+        customer_address: totalCombinedAddress,
+        total: finalCalculatedPrice,
+        status: 'pending',
+        payment_status: 'unpaid',
+        product_name: 'K2 Flora (' + qtyVal + ' Bottle)',
+        total_price: finalCalculatedPrice
+      };
+
+      var res = await supabase.from('orders').insert([orderData]);
+
+      if (res.error) {
+        showToast('❌ Order fail! ' + res.error.message);
+      } else {
+        showToast('🎉 Order Placed Successfully!');
+        document.getElementById('checkout-form').reset();
+      }
+    } catch(err) {
+      showToast('❌ Error: ' + err.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false; 
+        btn.textContent = '✅ Confirm Order';
+      }
+    }
+  }
+
+  window.onload = fetchLiveProducts;
+</script>
+
