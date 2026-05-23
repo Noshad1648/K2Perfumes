@@ -424,12 +424,15 @@ async function placeOrder() {
     closeOrderModal();
     document.getElementById('success-modal').classList.add('open');
     cart = []; updateCartUI();
-  } catch(e) {
-    showToast('❌ Order fail! Dobara try karein.');
-    console.error(e);
-  }
-  btn.disabled = false; btn.textContent = '✅ Confirm Order';
-}
+        // Is code ko line 427 se 432 tak (catch block ke aakhir mein) replace karein
+    } catch(e) {
+        console.error("Javascript Crash Error:", e);
+        showToast('❌ JavaScript Error: ' + e.message);
+    } finally {
+        btn.disabled = false; 
+        btn.textContent = '✅ Confirm Order';
+    }
+
 
 function addToCart(id) {
   const p = products.find(x => x.id === id);
